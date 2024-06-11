@@ -7,24 +7,30 @@ defmodule PhxChatWeb.ChatLive do
 
   def render(assigns) do
     ~H"""
-    <%= if !@username do %>
-      <.simple_form for={@username_form} phx-change="validate" phx-submit="save">
-        <.input field={@username_form[:username]} label="Username" phx-debounce="blur" />
-        <:actions>
-          <.button>Save</.button>
-        </:actions>
-      </.simple_form>
-    <% else %>
-      <.live_component
-        id="messages"
-        module={PhxChatWeb.ChatMessages}
-        username={@username}
-        message_form={@message_form}
-        messages={@messages}
-      >
-      </.live_component>
-    <% end %>
-    <button phx-click="show_socket">show socket</button>
+    <div class="m-4">
+      <%= if !@username do %>
+        <.simple_form for={@username_form} phx-change="validate" phx-submit="save">
+          <.input
+            field={@username_form[:username]}
+            label="Username"
+            phx-debounce="blur"
+            placeholder="Please enter a username for the session"
+          />
+          <:actions>
+            <button class="p-3 bg-slate-800 border border-slate-800 rounded-xl text-slate-100">Join</button>
+          </:actions>
+        </.simple_form>
+      <% else %>
+        <.live_component
+          id="messages"
+          module={PhxChatWeb.ChatMessages}
+          username={@username}
+          message_form={@message_form}
+          messages={@messages}
+        >
+        </.live_component>
+      <% end %>
+    </div>
     """
   end
 
@@ -109,7 +115,7 @@ defmodule PhxChatWeb.ChatLive do
       {:ok, message} ->
         {:noreply,
          socket
-         |> assign(:messages,  messages ++ [message])}
+         |> assign(:messages, messages ++ [message])}
 
       {:error, value} ->
         IO.inspect(value)
