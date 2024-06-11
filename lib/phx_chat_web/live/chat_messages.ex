@@ -1,23 +1,26 @@
 defmodule PhxChatWeb.ChatMessages do
   use Phoenix.LiveComponent
   alias PhxChat.Messages
+  import PhxChatWeb.CoreComponents
 
   attr :username, :string, required: true
-  attr :messages, :list, required: true
+  # attr :messages, :list, required: true
 
   def render(assigns) do
     ~H"""
     <div>
       <h1 class="text-2xl">Got the rendering component done</h1>
 
-      <.form let={f} phx-submit="message_sent">
-        <.input for={@f}/>
 
+      <%= for message <- @messages do %>
+        <p><%= message.body %></p>
+      <% end %>
+      <.simple_form for={@message_form} phx-submit="message_sent">
+        <.input field={@message_form[:body]} type="text" />
         <:actions>
-        <button>Send</button>
-
+          <button>Send</button>
         </:actions>
-      </.form>
+      </.simple_form>
     </div>
     """
   end

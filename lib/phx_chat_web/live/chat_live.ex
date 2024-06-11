@@ -3,12 +3,13 @@ defmodule PhxChatWeb.ChatLive do
   import PhxChatWeb.CoreComponents
   alias PhxChat.Messages.NewUser
   alias PhxChat.Messages
+  alias PhxChat.Messages.Message
 
   def render(assigns) do
     ~H"""
     <%= if !@username do %>
-      <.simple_form for={@form} phx-change="validate" phx-submit="save">
-        <.input field={@form[:username]} label="Username" phx-debounce="blur" />
+      <.simple_form for={@username_form} phx-change="validate" phx-submit="save">
+        <.input field={@username_form[:username]} label="Username" phx-debounce="blur" />
         <:actions>
           <.button>Save</.button>
         </:actions>
@@ -17,8 +18,9 @@ defmodule PhxChatWeb.ChatLive do
       <.live_component
         id="messages"
         module={PhxChatWeb.ChatMessages}
-        messages={@messages}
         username={@username}
+        message_form={@message_form}
+        messages={@messages}
       >
       </.live_component>
     <% end %>
@@ -29,23 +31,28 @@ defmodule PhxChatWeb.ChatLive do
   def mount(_params, _session, socket) do
     {:ok,
      socket
-     |> assign(:username, "name")
      |> assign(:messages, [])
+     |> assign(:username, nil)
      |> assign_new_user()
-     |> clear_form()}
+     |> clear_username_form()}
   end
 
-  def clear_form(socket) do
+  defp assign_new_user(socket) do
+    socket
+    |> assign(:new_user, %NewUser{})
+  end
+
+  def clear_username_form(socket) do
     form =
       socket.assigns.new_user
       |> Messages.change_user()
       |> to_form()
 
-    assign(socket, :form, form)
+    assign(socket, :username_form, form)
   end
 
-  def assign_form(socket, changeset) do
-    assign(socket, :form, to_form(changeset))
+  def assign_username_form(socket, changeset) do
+    assign(socket, :username_form, to_form(changeset))
   end
 
   def handle_event(
@@ -58,29 +65,59 @@ defmodule PhxChatWeb.ChatLive do
       |> Messages.change_user(user_params)
       |> Map.put(:action, :validate)
 
-    {:noreply, assign_form(socket, changeset)}
+    {:noreply, assign_username_form(socket, changeset)}
+  end
+
+  def assign_new_message(socket) do
+    %{assigns: %{username: username}} = socket
+
+    socket
+    |> assign(:new_message, %Message{username: username})
+  end
+
+  defp clear_message_form(socket) do
+    form =
+      socket.assigns.new_message
+      |> Messages.change_message()
+      |> to_form()
+
+    assign(socket, :message_form, form)
   end
 
   def handle_event("save", %{"new_user" => %{"username" => username}}, socket) do
-    {:noreply, socket |> assign(username: username)}
+    {:noreply,
+     socket
+     |> assign(username: username)
+     |> assign_new_message()
+     |> clear_message_form()}
   end
+
+  # defp assign_message_form(socket, changeset) do
+  #   assign(socket, :message_form, to_form(changeset))
+  # end
 
   def handle_event("show_socket", _params, socket) do
     {:noreply, socket |> IO.inspect()}
   end
 
-  def handle_event("message_sent", unsigned_params, socket) do
-    IO.inspect(unsigned_params)
-    {:noreply, socket}
+  def handle_event(
+        "message_sent",
+        %{"message" => %{"body" => body}},
+        %{assigns: %{username: username, messages: messages}} = socket
+      ) do
+    case Messages.create_message(%{username: username, body: body}) do
+      {:ok, message} ->
+        {:noreply,
+         socket
+         |> assign(:messages,  messages ++ [message])}
+
+      {:error, value} ->
+        IO.inspect(value)
+        {:noreply, socket}
+    end
   end
 
   def handle_info({:load_messages, data}, socket) do
-    IO.inspect(data)
-    {:noreply, socket |> assign(:messages, data.messages)} 
-  end
-
-  defp assign_new_user(socket) do
-    socket
-    |> assign(:new_user, %NewUser{})
+    {:noreply, socket |> assign(:messages, data.messages)}
   end
 end
