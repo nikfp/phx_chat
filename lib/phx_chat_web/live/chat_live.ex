@@ -17,7 +17,9 @@ defmodule PhxChatWeb.ChatLive do
             placeholder="Please enter a username for the session"
           />
           <:actions>
-            <button class="p-3 bg-slate-800 border border-slate-800 rounded-xl text-slate-100">Join</button>
+            <button class="p-3 bg-slate-800 border border-slate-800 rounded-xl text-slate-100">
+              Join
+            </button>
           </:actions>
         </.simple_form>
       <% else %>
