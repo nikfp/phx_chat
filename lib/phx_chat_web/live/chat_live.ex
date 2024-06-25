@@ -100,10 +100,6 @@ defmodule PhxChatWeb.ChatLive do
      |> clear_message_form()}
   end
 
-  # defp assign_message_form(socket, changeset) do
-  #   assign(socket, :message_form, to_form(changeset))
-  # end
-
   def handle_event("show_socket", _params, socket) do
     {:noreply, socket |> IO.inspect()}
   end
@@ -127,5 +123,14 @@ defmodule PhxChatWeb.ChatLive do
 
   def handle_info({:load_messages, data}, socket) do
     {:noreply, socket |> assign(:messages, data.messages)}
+  end
+
+  def handle_info(
+        %{message: message},
+        %{assigns: %{messages: messages}} = socket
+      ) do
+    {:noreply,
+     socket
+     |> assign(:messages, messages ++ [message])}
   end
 end

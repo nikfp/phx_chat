@@ -8,7 +8,6 @@ defmodule PhxChat.Messages do
   alias PhxChat.Messages.Message
   alias PhxChat.Repo
 
-
   @doc """
   Returns the list of messages.
 
@@ -54,6 +53,24 @@ defmodule PhxChat.Messages do
     %Message{}
     |> Message.changeset(attrs)
     |> Repo.insert()
+    |> broadcast_message!()
+  end
+
+  defp broadcast_message!(message) do
+    case message do
+      {:ok, outbound_message} ->
+        Phoenix.PubSub.broadcast_from!(
+          PhxChat.PubSub,
+          self(),
+          "chat",
+          %{message: outbound_message}
+        )
+
+      {:error, _} ->
+        IO.puts("Write operation for message encountered an error")
+    end
+
+    message
   end
 
   @doc """

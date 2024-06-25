@@ -27,6 +27,7 @@ defmodule PhxChatWeb.ChatMessages do
   def mount(socket) do
     messages = Messages.list_messages()
     send(self(), {:load_messages, %{messages: messages}})
+    Phoenix.PubSub.subscribe(PhxChat.PubSub, "chat")
     {:ok, socket}
   end
 end
